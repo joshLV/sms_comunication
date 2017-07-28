@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dzd.phonebook.dao.SmsReceiveReplyPushDao">
+	<!-- Result Map -->
+	<resultMap id="BaseResultMap" type="com.dzd.phonebook.entity.SmsReceiveReplyPush">
+		<result column="id" property="id" />
+		<result column="phone" property="phone" />
+		<result column="content" property="content" />
+		<result column="name" property="name" />
+		<result column="create_time" property="createTime" />
+		<result column="content" property="contents" />
+		<result column="send_content" property="sendContent" />
+		<result column="region" property="region" />
+		<result column="email" property="email" />
+
+	</resultMap>
+
+	<sql id="Example_Where_Clause">
+		where 1=1
+		<trim suffixOverrides=",">
+			<if test="condition != null and condition.start != null">
+				and date_format(r.create_time, '%Y-%m-%d') <![CDATA[ >= ]]>
+				date_format(#{condition.start,jdbcType=VARCHAR}, '%Y-%m-%d')
+				and date_format(r.create_time, '%Y-%m-%d') <![CDATA[ <= ]]>
+				date_format(#{condition.end,jdbcType=VARCHAR}, '%Y-%m-%d')
+			</if>
+			<if test="condition != null and condition.phone != null">
+				and r.phone like '%${condition.phone}%'
+			</if>
+			<if test="condition != null and condition.emailInput != null">
+				and u.email like '%${condition.emailInput}%'
+			</if>
+			<if test="condition != null and condition.smsAisleId != null">
+				and r.sms_aisle_id = (${condition.smsAisleId})
+			</if>
+			<if test="condition != null and condition.smsUserVal !=null  and condition.smsUserVal.size >0 ">
+				and u.sys_user_id in
+				<foreach collection="condition.smsUserVal" item="id"
+						 index="index" open="(" close=")" separator=",">
+					#{id}
+				</foreach>
+			</if>
+		</trim>
+	</sql>
+
+   <!--短信回复-->
+	<select id="queryUserPage" parameterType="com.dzd.phonebook.util.DzdPageParam"
+		resultType="com.dzd.phonebook.entity.SmsReceiveReplyPush">
+		select * from (
+		select u.name,
+		u.email ,
+		r.id,
+		r.phone,
+		<if test="condition != null and condition.aisleColumn != null">
+			sa.name aname,
+		</if>
+		r.content,
+		r.state,
+		r.create_time createTime,
+		r.send_content sendContent
+		from sms_receive_reply_push r
+		left join sms_user u on r.sms_user_id=u.id
+		left join sms_aisle sa on sa.id = r.sms_aisle_id
+		<include refid="Example_Where_Clause" />
+		) ss
+		<if test="condition != null and condition.sortVal != null">
+			${condition.sortVal}
+		</if>
+
+	</select>
+
+	<!-- 删除记录 -->
+	<delete id="deleteSmsReceive" parameterType="Object">
+		delete from sms_receive_reply_push where id = #{id}
+	</delete>
+
+
+</mapper>   
